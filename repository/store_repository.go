@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-func CreateStore(store *model.Store) error {
-	query := `INSERT INTO stores (name, city) VALUES ($1, $2) RETURNING store_id, created_at`
-	err := config.DB.QueryRow(query, store.Name, store.City).Scan(&store.StoreID, &store.CreatedAt)
+func CreateStore(store *model.Store, userID int) error {
+	query := `INSERT INTO stores (user_id, name, city) VALUES ($1, $2, $3) RETURNING store_id, created_at`
+	err := config.DB.QueryRow(query, userID, store.Name, store.City).Scan(&store.StoreID, &store.CreatedAt)
 	return err
 }
 

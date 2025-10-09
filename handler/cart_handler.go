@@ -2,18 +2,24 @@ package handler
 
 import (
 	"pretest-golang-tdi/repository"
-	"strconv"
+	"pretest-golang-tdi/util"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type AddToCartRequest struct {
-	UserID    int `json:"user_id"`
 	ProductID int `json:"product_id"`
 	Quantity  int `json:"quantity"`
 }
 
 func AddToCartHandler(c *fiber.Ctx) error {
+	// Ambil user_id dari claims JWT, bukan dari body
+	claims := util.GetUserClaims(c)
+	if claims == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+	userID := claims.UserID
+
 	req := new(AddToCartRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON"})
@@ -22,7 +28,7 @@ func AddToCartHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Quantity must be positive"})
 	}
 
-	err := repository.AddItemToCart(req.UserID, req.ProductID, req.Quantity)
+	err := repository.AddItemToCart(userID, req.ProductID, req.Quantity)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -31,10 +37,12 @@ func AddToCartHandler(c *fiber.Ctx) error {
 }
 
 func GetUserCartHandler(c *fiber.Ctx) error {
-	userID, err := strconv.Atoi(c.Params("user_id"))
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid user ID"})
+	// Ambil user_id dari claims JWT
+	claims := util.GetUserClaims(c)
+	if claims == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
+	userID := claims.UserID
 
 	cart, err := repository.GetUserCart(userID)
 	if err != nil {

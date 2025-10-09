@@ -3,22 +3,21 @@ package handler
 import (
 	"database/sql"
 	"pretest-golang-tdi/repository"
+	"pretest-golang-tdi/util"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type CheckoutRequest struct {
-	UserID int `json:"user_id"`
-}
-
 func CheckoutHandler(c *fiber.Ctx) error {
-	req := new(CheckoutRequest)
-	if err := c.BodyParser(req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON"})
+	// Ambil user_id dari claims JWT
+	claims := util.GetUserClaims(c)
+	if claims == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
+	userID := claims.UserID
 
-	order, err := repository.Checkout(req.UserID)
+	order, err := repository.Checkout(userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -27,10 +26,12 @@ func CheckoutHandler(c *fiber.Ctx) error {
 }
 
 func GetUserOrdersHandler(c *fiber.Ctx) error {
-	userID, err := strconv.Atoi(c.Params("user_id"))
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid user ID"})
+	// Ambil user_id dari claims JWT
+	claims := util.GetUserClaims(c)
+	if claims == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
+	userID := claims.UserID
 
 	orders, err := repository.GetUserOrders(userID)
 	if err != nil {
