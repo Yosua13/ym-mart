@@ -11,7 +11,6 @@ import (
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET_KEY"))
 
-// Protected middleware untuk memeriksa apakah token valid
 func Protected() fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		SigningKey:   jwtSecret,
@@ -20,7 +19,6 @@ func Protected() fiber.Handler {
 	})
 }
 
-// Authorize middleware untuk memeriksa peran pengguna
 func Authorize(allowedRoles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user := c.Locals("user").(*jwt.Token)

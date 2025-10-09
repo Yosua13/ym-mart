@@ -10,7 +10,6 @@ import (
 )
 
 func CheckoutHandler(c *fiber.Ctx) error {
-	// Ambil user_id dari claims JWT
 	claims := util.GetUserClaims(c)
 	if claims == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
@@ -26,7 +25,6 @@ func CheckoutHandler(c *fiber.Ctx) error {
 }
 
 func GetUserOrdersHandler(c *fiber.Ctx) error {
-	// Ambil user_id dari claims JWT
 	claims := util.GetUserClaims(c)
 	if claims == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})

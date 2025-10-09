@@ -13,7 +13,6 @@ type AddToCartRequest struct {
 }
 
 func AddToCartHandler(c *fiber.Ctx) error {
-	// Ambil user_id dari claims JWT, bukan dari body
 	claims := util.GetUserClaims(c)
 	if claims == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
@@ -37,7 +36,6 @@ func AddToCartHandler(c *fiber.Ctx) error {
 }
 
 func GetUserCartHandler(c *fiber.Ctx) error {
-	// Ambil user_id dari claims JWT
 	claims := util.GetUserClaims(c)
 	if claims == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})

@@ -20,7 +20,6 @@ func Checkout(userID int) (model.Order, error) {
 	}
 	defer tx.Rollback()
 
-	// 1. Ambil keranjang dan item-itemnya
 	cart, err := GetUserCart(userID)
 	if err != nil {
 		return order, errors.New("keranjang tidak ditemukan")
@@ -29,7 +28,6 @@ func Checkout(userID int) (model.Order, error) {
 		return order, errors.New("keranjang kosong")
 	}
 
-	// 2. Cek stok produk (dengan row locking untuk keamanan)
 	totalAmount := 0.0
 	for _, item := range cart.CartItems {
 		var currentStock int
@@ -43,7 +41,6 @@ func Checkout(userID int) (model.Order, error) {
 		totalAmount += item.Product.Price * float64(item.Quantity)
 	}
 
-	// 3. Buat order baru
 	order.UserID = userID
 	order.InvoiceNumber = fmt.Sprintf("INV/%d/%d", userID, time.Now().Unix())
 	order.Status = "Menunggu Pembayaran"
@@ -55,7 +52,6 @@ func Checkout(userID int) (model.Order, error) {
 		return order, err
 	}
 
-	// 4. Masukkan item ke order_items dan kurangi stok
 	for _, item := range cart.CartItems {
 		itemQuery := `INSERT INTO order_items (order_id, product_id, product_name, price_at_purchase, quantity) VALUES ($1, $2, $3, $4, $5)`
 		_, err = tx.Exec(itemQuery, order.OrderID, item.ProductID, item.Product.Name, item.Product.Price, item.Quantity)
@@ -70,7 +66,6 @@ func Checkout(userID int) (model.Order, error) {
 		}
 	}
 
-	// 5. Kosongkan keranjang
 	_, err = tx.Exec("DELETE FROM cart_items WHERE cart_id = $1", cart.CartID)
 	if err != nil {
 		return order, err
@@ -81,7 +76,6 @@ func Checkout(userID int) (model.Order, error) {
 
 func GetUserOrders(userID int) ([]model.Order, error) {
 	var orders []model.Order
-	// 1. Ambil semua order utama milik user
 	query := `SELECT order_id, user_id, invoice_number, total_amount, status, created_at FROM orders WHERE user_id = $1 ORDER BY created_at DESC`
 	rows, err := config.DB.Query(query, userID)
 	if err != nil {
@@ -106,7 +100,6 @@ func GetUserOrders(userID int) ([]model.Order, error) {
 		return orders, nil
 	}
 
-	// 2. Ambil semua item dari order-order tersebut dalam satu query
 	itemQuery := `SELECT order_item_id, order_id, product_id, product_name, price_at_purchase, quantity FROM order_items WHERE order_id = ANY($1)`
 	itemRows, err := config.DB.Query(itemQuery, pq.Array(orderIDs))
 	if err != nil {
@@ -114,7 +107,6 @@ func GetUserOrders(userID int) ([]model.Order, error) {
 	}
 	defer itemRows.Close()
 
-	// 3. Masukkan item ke dalam order yang sesuai
 	for itemRows.Next() {
 		var item model.OrderItem
 		if err := itemRows.Scan(&item.OrderItemID, &item.OrderID, &item.ProductID, &item.ProductName, &item.PriceAtPurchase, &item.Quantity); err != nil {
@@ -131,13 +123,11 @@ func GetUserOrders(userID int) ([]model.Order, error) {
 func GetOrderByID(orderID int) (model.Order, error) {
 	var order model.Order
 
-	// Ambil data order utama
 	err := config.DB.QueryRow("SELECT order_id, user_id, invoice_number, total_amount, status, created_at FROM orders WHERE order_id = $1", orderID).Scan(&order.OrderID, &order.UserID, &order.InvoiceNumber, &order.TotalAmount, &order.Status, &order.CreatedAt)
 	if err != nil {
 		return order, err
 	}
 
-	// Ambil item-item terkait
 	itemQuery := `SELECT order_item_id, order_id, product_id, product_name, price_at_purchase, quantity FROM order_items WHERE order_id = $1`
 	rows, err := config.DB.Query(itemQuery, orderID)
 	if err != nil {
