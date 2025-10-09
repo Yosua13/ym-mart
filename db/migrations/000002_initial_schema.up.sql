@@ -13,7 +13,7 @@ CREATE TABLE users (
 -- Tabel Toko
 CREATE TABLE stores (
     store_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(user_id), -- Relasi ke penjual
+    user_id INT NOT NULL REFERENCES users(user_id), 
     name VARCHAR(255) NOT NULL,
     city VARCHAR(100),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -33,7 +33,7 @@ CREATE TABLE products (
 -- Tabel Keranjang Belanja
 CREATE TABLE carts (
     cart_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(user_id) UNIQUE, -- FK ke users
+    user_id INT NOT NULL REFERENCES users(user_id) UNIQUE, 
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -49,7 +49,7 @@ CREATE TABLE cart_items (
 -- Tabel Transaksi/Order
 CREATE TABLE orders (
     order_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(user_id), -- FK ke users
+    user_id INT NOT NULL REFERENCES users(user_id), 
     invoice_number VARCHAR(255) NOT NULL UNIQUE,
     total_amount DECIMAL(12, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Menunggu Pembayaran',
